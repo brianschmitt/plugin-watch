@@ -86,10 +86,11 @@ class Watch extends TwilioClientCommand {
 
   async getLogEvents() {
     try {
-      const [logEvents, smsEvents, callEvents] = await Promise.all([
-        this.twilioClient.monitor.alerts.list({ startDate: this.startDate }),
+      const [logEvents, smsEvents, callEvents, clientEvents] = await Promise.all([
+        this.twilioClient.monitor.v1.alerts.list({ startDate: this.startDate }),
         this.twilioClient.messages.list({ dateSentAfter: this.startDate }),
         this.twilioClient.calls.list({ startTimeAfter: this.startDate }),
+        this.twilioClient.monitor.v1.events.list({ startDate: this.startDate }),
       ]);
 
       return this.filterLogEvents(logEvents, "debugger", (e) => e.sid)
@@ -125,6 +126,15 @@ class Watch extends TwilioClientCommand {
               raw: e,
             })
           )
+        )
+        .concat(
+          this.filterLogEvents(clientEvents, "event", (e) => e.sid).map((e) => ({
+            date: this.formatDateTime(e.dateCreated),
+            type: `event[${e.eventType}]`,
+            code: e.resourceType,
+            text: e.description || JSON.stringify(e),
+            raw: e,
+          }))
         )
         .sort((a, b) => {
           if (a.date < b.date) {
