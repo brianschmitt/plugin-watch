@@ -130,9 +130,9 @@ class Watch extends TwilioClientCommand {
         .concat(
           this.filterLogEvents(clientEvents, "event", (e) => e.sid).map((e) => ({
             date: this.formatDateTime(e.dateCreated),
-            type: `event[${e.eventType}]`,
-            code: e.resourceType,
-            text: e.description || JSON.stringify(e),
+            type: `event[${e.resourceType}]`,
+            code: e.eventType,
+            text: e.description || e.resourceSid,
             raw: e,
           }))
         )
